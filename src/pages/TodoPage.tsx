@@ -1,62 +1,56 @@
-import React, {useState, useEffect} from 'react';
-
-import {InputForm} from "../components/InputForm";
-import {TodoList} from "../components/TodoList";
-import {ITodo} from "../interfaces";
-
-declare var confirm: (question: string) => boolean;
+import React, { useState, useEffect, useCallback } from 'react';
+import { InputForm } from '../components/InputForm';
+import { TodoList } from '../components/TodoList';
+import { ITodo } from '../interfaces';
 
 export const TodoPage: React.FC = () => {
     const [todos, setTodos] = useState<ITodo[]>([]);
 
     useEffect(() => {
-        const savedItems = JSON.parse(localStorage.getItem('todos') || '[]') as ITodo[];
-        setTodos(savedItems)
+        try {
+            const savedItems = JSON.parse(localStorage.getItem('todos') || '[]') as ITodo[];
+            setTodos(savedItems);
+        } catch (error) {
+            console.error('Failed to load todos from localStorage:', error);
+        }
     }, []);
 
     useEffect(() => {
-        localStorage.setItem('todos', JSON.stringify(todos))
+        try {
+            localStorage.setItem('todos', JSON.stringify(todos));
+        } catch (error) {
+            console.error('Failed to set todo to localStorage:', error);
+        }
     }, [todos]);
 
-    const addTodo = (title: string) => {
+    const addTodo = useCallback((title: string) => {
         const newTodo: ITodo = {
-            title: title,
+            title,
             id: Date.now(),
-            completed: false
+            completed: false,
         };
+        setTodos((prevState) => [newTodo, ...prevState]);
+    }, []);
 
-        setTodos(prevState => [newTodo, ...prevState]);
-    };
-
-    const toggleHandler = (id: number) => {
-        setTodos(prevState => prevState.map(todo => {
-                if (todo.id === id) {
-                    todo.completed = !todo.completed
-                }
-                return todo
-            })
-        )
-    };
-
-    const removeHandler = (id: number) => {
-        const shouldRemove = window.confirm('Are you sure you wat to delete this item?');
-        if (shouldRemove) {
-            setTodos(prevState => prevState.filter(todo =>
-                todo.id !== id
-                )
+    const toggleHandler = useCallback((id: number) => {
+        setTodos((prevState) =>
+            prevState.map((todo) =>
+                todo.id === id ? { ...todo, completed: !todo.completed } : todo
             )
+        );
+    }, []);
+
+    const removeHandler = useCallback((id: number) => {
+        const shouldRemove = window.confirm('Are you sure you want to delete this item?');
+        if (shouldRemove) {
+            setTodos((prevState) => prevState.filter((todo) => todo.id !== id));
         }
-    };
+    }, []);
 
     return (
-        <>
-            <div className='container'>
-                <InputForm onAdd={addTodo}/>
-                <TodoList
-                    onRemove={removeHandler}
-                    onToggle={toggleHandler}
-                    todos={todos}/>
-            </div>
-        </>
-    )
+        <div className="container">
+            <InputForm onAdd={addTodo} />
+            <TodoList todos={todos} onToggle={toggleHandler} onRemove={removeHandler} />
+        </div>
+    );
 };

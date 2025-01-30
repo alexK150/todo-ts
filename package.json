@@ -19,11 +19,12 @@
     "typescript": "^3.7.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "comment": "The NODE_OPTIONS flag is needed for compatibility with Webpack, since OpenSSL 3.0 in Node.js 17+ disabled old encryption algorithms.",
   "eslintConfig": {
     "extends": "react-app"
   },
